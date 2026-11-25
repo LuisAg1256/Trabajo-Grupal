@@ -1,5 +1,5 @@
 name: sensor_track
-description: "A new Flutter project."
+description: "SensorTrack: monitoreo en tiempo real de sensores móviles y ubicación GPS con respaldo en Supabase."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -34,6 +34,13 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  supabase_flutter: ^2.18.3
+  sensors_plus: ^7.1.1
+  geolocator: ^14.1.2
+  fl_chart: ^1.3.1
+  intl: ^0.20.3
+  flutter_map: ^8.3.2
+  latlong2: ^0.10.1
 
 dev_dependencies:
   flutter_test:

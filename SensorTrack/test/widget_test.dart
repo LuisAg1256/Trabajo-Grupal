@@ -1,30 +1,44 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:sensor_track/main.dart';
+import 'package:sensor_track/features/splash/splash_page.dart';
+import 'package:sensor_track/models/sensor_reading.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('SplashPage muestra SensorTrack y navega a HomePage con 5 pestañas',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: SplashPage(skipAsyncChecks: true)),
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Verifica que el Splash muestra el nombre de la aplicación
+    expect(find.text('SensorTrack'), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Avanza el temporizador del Splash y estabiliza la transición a HomePage
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verifica las 5 secciones del menú de navegación
+    expect(find.text('Inicio'), findsOneWidget);
+    expect(find.text('Sensores'), findsWidgets);
+    expect(find.text('Ubicación'), findsWidgets);
+    expect(find.text('Historial'), findsWidgets);
+    expect(find.text('Estadísticas'), findsWidgets);
+  });
+
+  test('SensorReading serializa en UTC sin id y calcula magnitud correctamente', () {
+    final now = DateTime.utc(2026, 11, 25, 14, 30);
+    final reading = SensorReading(
+      sensorType: SensorType.accelerometer,
+      x: 3.0,
+      y: 4.0,
+      z: 0.0,
+      recordedAt: now,
+    );
+
+    expect(reading.magnitude, closeTo(5.0, 0.001));
+    final insertMap = reading.toInsertMap();
+    expect(insertMap.containsKey('id'), isFalse);
+    expect(insertMap['sensor_type'], 'accelerometer');
+    expect(insertMap['recorded_at'], '2026-11-25T14:30:00.000Z');
   });
 }

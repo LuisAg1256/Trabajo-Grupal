@@ -7,7 +7,11 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Sensor Track</string>
+	<string>SensorTrack</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>SensorTrack usa tu ubicación para registrar las coordenadas y precisión de las mediciones.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>SensorTrack accede al acelerómetro, giroscopio y magnetómetro para monitorear el movimiento del dispositivo.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
