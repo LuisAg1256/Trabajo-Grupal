@@ -1,25 +1,69 @@
 # SensorTrack
 
-Aplicación móvil en Flutter para monitoreo en tiempo real de sensores físicos (acelerómetro, giroscopio, magnetómetro) y ubicación GPS con persistencia en **Supabase**.
+Aplicación Flutter para monitorear acelerómetro, giroscopio, magnetómetro y GPS,
+guardar lecturas en Supabase y consultar su historial y estadísticas.
 
-## Ejecución del proyecto
+## Requisitos
 
-1. Copia el archivo de ejemplo de variables de entorno:
-   ```bash
-   cp env.example.json env.json
+- Flutter con Dart SDK `3.13.7` o posterior, conforme a `pubspec.yaml`.
+- Proyecto Supabase y dispositivo Android o iOS para validar sensores y GPS.
+- Acceso a Internet para Supabase y las teselas de OpenStreetMap.
+
+## Configuración local
+
+1. Copia `env.example.json` como `env.json` y completa la URL del proyecto y la
+   clave pública de Supabase:
+
+   ```powershell
+   Copy-Item env.example.json env.json
    ```
-2. Coloca tu `SUPABASE_URL` y tu clave pública (`SUPABASE_KEY`) dentro de `env.json` (este archivo está ignorado en Git).
-3. Ejecuta el script SQL ubicado en [`../supabase/schema.sql`](../supabase/schema.sql) en el **SQL Editor** de Supabase.
-4. Lanza la aplicación pasando las variables de entorno:
-   ```bash
+
+2. Ejecuta el contenido de [`../supabase/schema.sql`](../supabase/schema.sql)
+   desde el SQL Editor del proyecto Supabase. El script crea la tabla,
+   permisos/políticas y la función RPC de estadísticas.
+3. Desde esta carpeta, descarga las dependencias y ejecuta:
+
+   ```powershell
+   flutter pub get
    flutter run --dart-define-from-file=env.json
    ```
 
-## Estado de módulos del equipo
+`env.json` está excluido de Git. No incluyas una clave `service_role` ni datos
+reales de credenciales en commits.
 
-- [x] **00 · Configuración inicial:** Dependencias, esquema SQL + RLS, `Env`, permisos Android/iOS, modelo `SensorReading` y arquitectura en capas.
-- [x] **01 · Pantalla principal:** `SplashPage`, navegación `NavigationBar` (5 pestañas con `IndexedStack`), verificación de conexión a Supabase y detección de sensores disponibles.
-- [x] **02 · Monitoreo de sensores:** Lectura en tiempo real de acelerómetro (`m/s²` + magnitud + mini-gráfico), giroscopio (`rad/s`), magnetómetro opcional, y GPS con consentimiento de privacidad y mapa OpenStreetMap (`flutter_map`).
-- [ ] **03 · Registro en Supabase:** Completar `insert` / `insertMany` en `lib/services/readings_repository.dart` y conectar los bloques preparados al final de `SensorsPage` y `LocationPage`.
-- [ ] **04 · Historial de mediciones:** Implementar `fetchPage` / `fetchById` y completar `lib/features/history/history_page.dart` y `reading_detail_page.dart`.
-- [ ] **05 · Estadísticas y visualización:** Añadir RPC `sensor_stats()` en `../supabase/schema.sql` y completar `lib/features/stats/stats_page.dart`.
+## Arquitectura
+
+```text
+lib/
+├── core/                 # Entorno, formato y errores del repositorio
+├── models/               # SensorReading y modelos estadísticos
+├── services/             # Sensores, ubicación, persistencia y fuente de estadísticas
+├── features/             # Splash, inicio, sensores, ubicación, historial y estadísticas
+└── widgets/              # Tarjetas, controles de guardado y gráficos reutilizables
+```
+
+La pantalla de estadísticas depende del contrato `SensorStatsSource`. Su
+adaptador Supabase está separado de la UI, por lo que puede sustituirse en
+pruebas sin cambiar la navegación ni los módulos de sensores e historial.
+
+## Estado de módulos
+
+| Módulo | Estado del código | Pendiente de integración/verificación |
+|---|---|---|
+| 00 Configuración | Configuración, modelo, permisos y esquema presentes | Confirmar credenciales locales y ejecutar el SQL en Supabase |
+| 01 Inicio | Splash, navegación y estado del sistema | Validación en dispositivo |
+| 02 Sensores | Streams de movimiento, ubicación y mapa | Validación en dispositivo y resolución local de dependencias |
+| 03 Registro | Inserción y monitoreo por lotes | Verificar persistencia, consentimiento y reintentos |
+| 04 Historial | Filtro, paginación y detalle | Comparar resultados con Supabase |
+| 05 Estadísticas | Resumen, máximos/mínimos, última ubicación y series | Ejecutar el SQL y validar cifras contra la base |
+| 06 Entregables | Informe, guion y lista de evidencias | Añadir capturas/video reales, integrantes y resultados de pruebas |
+
+## Evidencias y documentación
+
+- [`../doc/informe-tecnico.md`](../doc/informe-tecnico.md)
+- [`../doc/guion-demostracion.md`](../doc/guion-demostracion.md)
+- [`../doc/evidencias/README.md`](../doc/evidencias/README.md)
+- [Plan de módulos](../doc/plan/README.md)
+
+Las evidencias deben capturarse en un dispositivo real y no se simulan dentro
+del repositorio.

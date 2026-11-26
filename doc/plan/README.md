@@ -2,8 +2,9 @@
 
 Plan de trabajo para implementar todo lo que pide el documento
 [`Taller_SensorTrack_Flutter_Sensores_Supabase.docx`](../Taller_SensorTrack_Flutter_Sensores_Supabase.docx),
-partiendo de la app Flutter ya creada en [`SensorTrack/`](../../SensorTrack) (hoy es la plantilla
-del contador por defecto, sin dependencias añadidas).
+partiendo de la aplicación Flutter en [`SensorTrack/`](../../SensorTrack). Los
+checklists de cada módulo distinguen el código implementado de lo que aún requiere
+integración con Supabase, pruebas en dispositivo o evidencia.
 
 ## Índice
 
@@ -33,11 +34,14 @@ lib/
 │   ├── env.dart                  # URL y clave de Supabase (vía --dart-define)
 │   └── formatters.dart           # Formato de fechas y números
 ├── models/
-│   └── sensor_reading.dart       # Modelo de la tabla sensor_readings
+│   ├── sensor_reading.dart       # Modelo de la tabla sensor_readings
+│   └── sensor_stats.dart         # Resumen, máximos/mínimos y puntos de serie
 ├── services/
 │   ├── sensor_service.dart       # Streams de acelerómetro / giroscopio (+ disponibilidad)
 │   ├── location_service.dart     # Permisos y lectura GPS (geolocator)
-│   └── readings_repository.dart  # CRUD y consultas a Supabase
+│   ├── readings_repository.dart  # Inserciones e historial en Supabase
+│   ├── sensor_stats_source.dart # Contrato independiente para estadísticas
+│   └── supabase_sensor_stats_source.dart # RPC y consultas de series temporales
 ├── features/
 │   ├── splash/splash_page.dart
 │   ├── home/home_page.dart       # Shell con NavigationBar + pestaña Inicio
@@ -46,7 +50,7 @@ lib/
 │   ├── history/history_page.dart
 │   ├── history/reading_detail_page.dart
 │   └── stats/stats_page.dart
-└── widgets/                      # Widgets reutilizables (tarjeta de ejes, estado, etc.)
+└── widgets/                      # Tarjetas, controles y gráficos reutilizables
 ```
 
 Flujo de datos:

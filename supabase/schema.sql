@@ -50,5 +50,55 @@ BEGIN
     END IF;
 END $$;
 
--- Nota para el compañero del Módulo 5 (Estadísticas):
--- Añadir aquí abajo la función RPC sensor_stats() descrita en doc/plan/05-modulo-estadisticas.md
+-- 4. Resumen para la pantalla de Estadísticas (Módulo 5).
+CREATE OR REPLACE FUNCTION public.sensor_stats()
+RETURNS JSON
+LANGUAGE sql
+STABLE
+SECURITY INVOKER
+SET search_path = public
+AS $$
+    SELECT json_build_object(
+        'total',
+        (SELECT COUNT(*) FROM public.sensor_readings),
+        'by_sensor',
+        (
+            SELECT COALESCE(json_object_agg(sensor_type, reading_count), '{}'::json)
+            FROM (
+                SELECT sensor_type, COUNT(*) AS reading_count
+                FROM public.sensor_readings
+                GROUP BY sensor_type
+            ) AS sensor_counts
+        ),
+        'accelerometer',
+        (
+            SELECT json_build_object(
+                'min_x', MIN(x),
+                'max_x', MAX(x),
+                'min_y', MIN(y),
+                'max_y', MAX(y),
+                'min_z', MIN(z),
+                'max_z', MAX(z)
+            )
+            FROM public.sensor_readings
+            WHERE sensor_type = 'accelerometer'
+        ),
+        'last_location',
+        (
+            SELECT json_build_object(
+                'latitude', latitude,
+                'longitude', longitude,
+                'accuracy', accuracy,
+                'recorded_at', recorded_at
+            )
+            FROM public.sensor_readings
+            WHERE sensor_type = 'gps'
+              AND latitude IS NOT NULL
+              AND longitude IS NOT NULL
+            ORDER BY recorded_at DESC
+            LIMIT 1
+        )
+    );
+$$;
+
+GRANT EXECUTE ON FUNCTION public.sensor_stats() TO anon;

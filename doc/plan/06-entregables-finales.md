@@ -17,12 +17,10 @@
 ## Tareas
 
 ### 6.1 Documentación del código y README
-- [ ] Reescribir `SensorTrack/README.md` (hoy es el de la plantilla) y el `README.md` raíz con:
-  - Descripción, capturas, integrantes del grupo.
-  - Requisitos (versión de Flutter, dispositivo físico).
-  - Cómo configurar Supabase (`supabase/schema.sql`) y `env.json` a partir de `env.example.json`.
-  - Cómo ejecutar: `flutter run --dart-define-from-file=env.json`.
-  - Estructura de carpetas y paquetes utilizados.
+- [x] Documentar descripción, arquitectura, configuración de Supabase y ejecución en
+  `SensorTrack/README.md` y el README raíz.
+- [x] Crear informe técnico y guion de demostración.
+- [ ] Completar los nombres de integrantes, capturas y versión exacta de Flutter usada en la entrega.
 - [ ] Doc comments `///` en modelos, servicios y pantallas.
 - [ ] Verificar que `env.json` y cualquier clave **no** estén en el historial de Git.
 
@@ -32,6 +30,7 @@ Ir guardándolas al terminar cada módulo (cada archivo de módulo lista las suy
 - [ ] `sensores/`: video del acelerómetro/giroscopio cambiando, captura del GPS.
 - [ ] `supabase/`: tabla con filas, políticas RLS, consultas de verificación de estadísticas.
 - [ ] Nombrar los archivos de forma descriptiva (`03-guardar-medicion-ok.png`).
+- [x] Documentar la lista de capturas pendientes en `doc/evidencias/README.md`.
 
 ### 6.3 Informe técnico breve (2–4 páginas)
 Estructura sugerida:
