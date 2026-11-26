@@ -21,6 +21,21 @@ class ReadingsRepository {
   /// Bandera actualizada en `main.dart` tras inicializar `Supabase.initialize`.
   static bool isSupabaseInitialized = false;
 
+  /// Tiempo máximo de espera para inserciones y consultas.
+  static const Duration _timeout = Duration(seconds: 10);
+
+  /// Avisa cada vez que se guardan mediciones nuevas, para que pantallas como
+  /// el Historial se recarguen solas.
+  static final StreamController<void> _changes =
+      StreamController<void>.broadcast();
+
+  /// Se emite un evento después de cada inserción correcta (Módulos 3 y 4).
+  Stream<void> get changes => _changes.stream;
+
+  /// Avisa al Historial de un guardado hecho fuera del repositorio, por
+  /// ejemplo con la función `guardarMedicion` del docente.
+  static void notificarCambios() => _changes.add(null);
+
   /// Último detalle de error de conexión (útil para mostrar diagnóstico en Inicio).
   String? lastConnectionError;
 
@@ -37,8 +52,7 @@ class ReadingsRepository {
   /// Comprueba si Supabase responde consultando como máximo 1 fila con timeout de 5 s.
   Future<bool> checkConnection() async {
     if (!Env.isConfigured) {
-      lastConnectionError =
-          'Credenciales pendientes en env.json (--dart-define-from-file=env.json)';
+      lastConnectionError = 'Credenciales pendientes en env.json (--dart-define-from-file=env.json)';
       return false;
     }
     if (!isSupabaseInitialized) {
@@ -66,29 +80,55 @@ class ReadingsRepository {
 
   /// [Módulo 3] Inserta una lectura individual en `sensor_readings`.
   Future<void> insert(SensorReading reading) async {
-    // TODO(Modulo 3): Implementar inserción con timeout y manejo de RepositoryException.
-    throw UnimplementedError('Pendiente de implementar en Módulo 3');
+    await _run(() => client.from(table).insert(reading.toInsertMap()));
+    _changes.add(null);
   }
 
-  /// [Módulo 3] Inserta un lote de lecturas en `sensor_readings`.
+  /// [Módulo 3] Inserta un lote de lecturas en `sensor_readings` en una sola
+  /// petición (monitoreo automático).
   Future<void> insertMany(List<SensorReading> readings) async {
-    // TODO(Modulo 3): Implementar inserción por lotes.
-    throw UnimplementedError('Pendiente de implementar en Módulo 3');
+    if (readings.isEmpty) return;
+    await _run(
+      () => client
+          .from(table)
+          .insert(readings.map((r) => r.toInsertMap()).toList()),
+    );
+    _changes.add(null);
   }
 
-  /// [Módulo 4] Obtiene una página de lecturas ordenadas por `recorded_at DESC`.
+  /// [Módulo 4] Obtiene una página de lecturas ordenadas por `recorded_at DESC`,
+  /// entre las posiciones [from] y [to] (inclusive), opcionalmente filtradas por [type].
   Future<List<SensorReading>> fetchPage({
     int from = 0,
     int to = 19,
     SensorType? type,
-  }) async {
-    // TODO(Modulo 4): Implementar consulta paginada y mapeo con SensorReading.fromMap.
-    throw UnimplementedError('Pendiente de implementar en Módulo 4');
+  }) {
+    return _run(() async {
+      var query = client.from(table).select();
+      if (type != null) query = query.eq('sensor_type', type.name);
+      final rows = await query
+          .order('recorded_at', ascending: false)
+          .range(from, to);
+      return rows.map(SensorReading.fromMap).toList();
+    });
   }
 
-  /// [Módulo 4] Consulta una lectura específica por su `id`.
-  Future<SensorReading?> fetchById(String id) async {
-    // TODO(Modulo 4): Implementar consulta por ID.
-    throw UnimplementedError('Pendiente de implementar en Módulo 4');
+  /// [Módulo 4] Consulta una lectura específica por su `id` (`null` si no existe).
+  Future<SensorReading?> fetchById(String id) {
+    return _run(() async {
+      final row = await client.from(table).select().eq('id', id).maybeSingle();
+      return row == null ? null : SensorReading.fromMap(row);
+    });
+  }
+
+  /// Ejecuta [action] con tiempo límite y convierte cualquier error en
+  /// [RepositoryException].
+  Future<T> _run<T>(Future<T> Function() action) async {
+    try {
+      return await action().timeout(_timeout);
+    } catch (e) {
+      throw RepositoryException.fromError(e);
+    }
   }
 }
+

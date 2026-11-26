@@ -8,6 +8,7 @@ import 'package:latlong2/latlong.dart';
 import '../../core/formatters.dart';
 import '../../models/sensor_reading.dart';
 import '../../services/location_service.dart';
+import '../../widgets/guardar_ubicacion_button.dart';
 
 /// Pantalla **3. Ubicación** (Módulo 2.4).
 /// Solicita consentimiento informado, gestiona permisos de GPS, muestra
@@ -456,7 +457,7 @@ class _LocationPageState extends State<LocationPage> {
           ),
           const SizedBox(height: 16),
 
-          // Espacio preparado para el Módulo 3 (Guardar ubicación con consentimiento)
+          // Módulo 3: Guardar ubicación en Supabase con consentimiento
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -482,11 +483,16 @@ class _LocationPageState extends State<LocationPage> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Espacio listo para añadir el switch de consentimiento explícito y el botón "Guardar ubicación" usando currentGpsReading y ReadingsRepository.insert.',
+                  'Antes del primer guardado se pide tu autorización para almacenar la ubicación en Supabase.',
                   style: TextStyle(
                     fontSize: 12,
                     color: colorScheme.onSurfaceVariant,
                   ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: GuardarUbicacionButton(ubicacion: currentGpsReading),
                 ),
               ],
             ),

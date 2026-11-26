@@ -24,6 +24,11 @@ CREATE INDEX IF NOT EXISTS idx_sensor_readings_type        ON sensor_readings (s
 -- 3. Seguridad a nivel de fila - RLS (Sección 11)
 ALTER TABLE sensor_readings ENABLE ROW LEVEL SECURITY;
 
+-- Permisos de tabla para la clave pública (rol anon). Sin ellos la API responde
+-- "42501 permission denied for table sensor_readings" aunque existan las políticas.
+-- No se concede UPDATE ni DELETE.
+GRANT SELECT, INSERT ON public.sensor_readings TO anon;
+
 -- Políticas para clave pública (rol anon): lectura e inserción permitidas;
 -- UPDATE y DELETE quedan bloqueados por defecto al no tener política.
 DO $$

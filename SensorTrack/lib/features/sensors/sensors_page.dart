@@ -9,6 +9,8 @@ import 'package:sensors_plus/sensors_plus.dart';
 import '../../models/sensor_reading.dart';
 import '../../services/sensor_service.dart';
 import '../../widgets/axis_card.dart';
+import '../../widgets/guardar_medicion_button.dart';
+import '../../widgets/monitoreo_control.dart';
 
 /// Pantalla **2. Sensores** (Módulo 2.2).
 /// Monitorea en tiempo real el acelerómetro (m/s²), el giroscopio (rad/s) y
@@ -175,6 +177,13 @@ class _SensorsPageState extends State<SensorsPage> {
     );
   }
 
+  /// Lectura actual del sensor pedido, usada por los controles del Módulo 3.
+  SensorReading? _lecturaActual(SensorType tipo) => switch (tipo) {
+    SensorType.accelerometer => currentAccelerometerReading,
+    SensorType.gyroscope => currentGyroscopeReading,
+    _ => null,
+  };
+
   double? get _accelMagnitude {
     if (_ax == null || _ay == null || _az == null) return null;
     return math.sqrt(_ax! * _ax! + _ay! * _ay! + _az! * _az!);
@@ -334,7 +343,7 @@ class _SensorsPageState extends State<SensorsPage> {
             const SizedBox(height: 16),
           ],
 
-          // 4. Espacio preparado para el Módulo 3 (Registro en Supabase)
+          // 4. Módulo 3: Guardar medición y monitoreo automático en Supabase
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -358,14 +367,10 @@ class _SensorsPageState extends State<SensorsPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  'Espacio listo para integrar el botón "Guardar medición" y el monitoreo automático por intervalos usando currentAccelerometerReading, currentGyroscopeReading y ReadingsRepository.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
+                const SizedBox(height: 12),
+                GuardarMedicionButton(lecturaActual: _lecturaActual),
+                const SizedBox(height: 12),
+                MonitoreoControl(lecturaActual: _lecturaActual),
               ],
             ),
           ),

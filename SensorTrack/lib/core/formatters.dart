@@ -25,6 +25,26 @@ class AppFormatters {
   static String coordinate(double? value) =>
       value == null ? '—' : value.toStringAsFixed(6);
 
+  /// Formatea un número con [decimals] decimales, o `—` si es nulo.
+  static String number(double? value, [int decimals = 2]) =>
+      value == null ? '—' : value.toStringAsFixed(decimals);
+
+  /// Resumen de los ejes de una lectura, p. ej. `X: 0.12  Y: 9.80  Z: 0.03`.
+  static String axes(SensorReading r) =>
+      'X: ${axis(r.x)}  Y: ${axis(r.y)}  Z: ${axis(r.z)}';
+
+  /// Coordenadas con precisión, p. ej. `-0.180530, -78.467830 (±5 m)`.
+  static String location(SensorReading r) {
+    final coords = '${coordinate(r.latitude)}, ${coordinate(r.longitude)}';
+    return r.accuracy == null
+        ? coords
+        : '$coords (±${r.accuracy!.toStringAsFixed(0)} m)';
+  }
+
+  /// Resumen de los valores registrados según el tipo de sensor (Módulo 4).
+  static String values(SensorReading r) =>
+      r.sensorType == SensorType.gps ? location(r) : axes(r);
+
   /// Nombre legible en español para cada [SensorType].
   static String sensorName(SensorType type) {
     switch (type) {
