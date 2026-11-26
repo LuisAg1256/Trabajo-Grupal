@@ -52,6 +52,7 @@ void main() {
       matching: find.text('GPS'),
     );
     await tester.ensureVisible(gpsSegment);
+    await tester.pumpAndSettle();
     await tester.tap(gpsSegment);
     await tester.pumpAndSettle();
 

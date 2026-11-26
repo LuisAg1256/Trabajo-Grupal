@@ -65,9 +65,12 @@ la nube requiere una autorización de almacenamiento separada.
 Las lecturas se representan con `SensorReading`. Los valores de sensor y
 coordenadas se mantienen opcionales para permitir filas de tipos distintos. El
 modelo serializa su fecha de captura en UTC y la interfaz la presenta en hora
-local. El helper docente usado para insertar acelerómetro no envía `recorded_at`,
-por lo que esa ruta usa el valor por defecto de la base de datos hasta que se
-unifique con el repositorio.
+local. El botón **Guardar medición** guarda el acelerómetro con la función
+`guardarMedicion(x, y, z)` proporcionada por el docente (sección 9 del taller),
+que se mantiene sin modificaciones en `lib/services/guardar_medicion.dart`.
+Esa función no envía `recorded_at`, por lo que la fecha la asigna la base de
+datos (`DEFAULT NOW()`) al recibir la fila; el botón añade alrededor de la
+llamada el manejo de errores de conexión o permisos que pide el taller.
 
 ## 4. Persistencia y base de datos
 
