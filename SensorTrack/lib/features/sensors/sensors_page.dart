@@ -6,11 +6,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 
+import '../../core/repository_exception.dart';
 import '../../models/sensor_reading.dart';
+import '../../services/detector_cambio_brusco.dart';
+import '../../services/readings_repository.dart';
 import '../../services/sensor_service.dart';
 import '../../widgets/axis_card.dart';
 import '../../widgets/guardar_medicion_button.dart';
 import '../../widgets/monitoreo_control.dart';
+import '../events/events_page.dart';
 
 /// Pantalla **2. Sensores** (Módulo 2.2).
 /// Monitorea en tiempo real el acelerómetro (m/s²), el giroscopio (rad/s) y
@@ -43,6 +47,12 @@ class _SensorsPageState extends State<SensorsPage> {
   static const int _maxSamples = 40;
   final List<FlSpot> _magnitudeHistory = [];
   int _sampleIndex = 0;
+
+  /// Detección de cambios bruscos del acelerómetro y alerta visual.
+  final DetectorCambioBrusco _detector = DetectorCambioBrusco();
+  final ReadingsRepository _repo = ReadingsRepository();
+  double? _alertaDelta;
+  Timer? _alertaTimer;
 
   @override
   void initState() {
@@ -85,6 +95,13 @@ class _SensorsPageState extends State<SensorsPage> {
               _magnitudeHistory.removeAt(0);
             }
           });
+          final delta = _detector.analizar(
+            event.x,
+            event.y,
+            event.z,
+            DateTime.now(),
+          );
+          if (delta != null) _registrarEvento(event, delta);
         },
         onError: (_) {
           if (!mounted) return;
@@ -136,6 +153,31 @@ class _SensorsPageState extends State<SensorsPage> {
     } catch (_) {
       _magAvailable = false;
     }
+  }
+
+  /// Muestra la alerta durante 3 s y guarda el evento en la tabla `event`.
+  Future<void> _registrarEvento(AccelerometerEvent e, double delta) async {
+    setState(() => _alertaDelta = delta);
+    _alertaTimer?.cancel();
+    _alertaTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) setState(() => _alertaDelta = null);
+    });
+    try {
+      await _repo.insertEvent(e.x, e.y, e.z);
+    } on RepositoryException catch (err) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Evento no guardado: ${err.message}'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    }
+  }
+
+  void _abrirEventos() {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const EventsPage()));
   }
 
   void _togglePause() {
@@ -194,6 +236,7 @@ class _SensorsPageState extends State<SensorsPage> {
     _accelSub?.cancel();
     _gyroSub?.cancel();
     _magSub?.cancel();
+    _alertaTimer?.cancel();
     super.dispose();
   }
 
@@ -209,6 +252,11 @@ class _SensorsPageState extends State<SensorsPage> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
+          IconButton(
+            onPressed: _abrirEventos,
+            tooltip: 'Eventos detectados',
+            icon: const Icon(Icons.warning_amber_rounded),
+          ),
           IconButton(
             onPressed: _togglePause,
             tooltip: _isPaused ? 'Reanudar lectura' : 'Pausar lectura',
@@ -244,6 +292,40 @@ class _SensorsPageState extends State<SensorsPage> {
             ],
           ),
           const SizedBox(height: 16),
+
+          // Alerta visual de cambio brusco (umbral en DetectorCambioBrusco)
+          if (_alertaDelta != null) ...[
+            Semantics(
+              liveRegion: true,
+              child: Card(
+                color: colorScheme.errorContainer,
+                child: ListTile(
+                  leading: Icon(
+                    Icons.warning_amber_rounded,
+                    color: colorScheme.onErrorContainer,
+                    size: 32,
+                  ),
+                  title: Text(
+                    '¡Cambio brusco detectado!',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onErrorContainer,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Δa = ${_alertaDelta!.toStringAsFixed(1)} m/s² '
+                    '(umbral ${DetectorCambioBrusco.umbral.toStringAsFixed(0)} m/s²)',
+                    style: TextStyle(color: colorScheme.onErrorContainer),
+                  ),
+                  trailing: TextButton(
+                    onPressed: _abrirEventos,
+                    child: const Text('Ver'),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
 
           // 1. Tarjeta de Acelerómetro
           AxisCard(

@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/env.dart';
 import '../core/repository_exception.dart';
+import '../models/event.dart';
 import '../models/sensor_reading.dart';
 
 /// Repositorio central para acceder a la tabla `sensor_readings` en Supabase.
@@ -121,6 +122,34 @@ class ReadingsRepository {
     });
   }
 
+  /// Tabla de eventos de cambio brusco del acelerómetro.
+  static const String eventTable = 'event';
+
+  /// Registra un cambio brusco detectado; `recorded_at` lo pone Supabase.
+  Future<void> insertEvent(double x, double y, double z) async {
+    await _run(
+      () => client.from(eventTable).insert({
+        'sensor_type': 'accelerometer',
+        'x': x,
+        'y': y,
+        'z': z,
+      }),
+    );
+    _changes.add(null);
+  }
+
+  /// Últimos [limit] eventos, del más reciente al más antiguo.
+  Future<List<Event>> fetchEvents({int limit = 100}) {
+    return _run(() async {
+      final rows = await client
+          .from(eventTable)
+          .select()
+          .order('recorded_at', ascending: false)
+          .limit(limit);
+      return rows.map(Event.fromMap).toList();
+    });
+  }
+
   /// Ejecuta [action] con tiempo límite y convierte cualquier error en
   /// [RepositoryException].
   Future<T> _run<T>(Future<T> Function() action) async {
@@ -131,4 +160,3 @@ class ReadingsRepository {
     }
   }
 }
-
