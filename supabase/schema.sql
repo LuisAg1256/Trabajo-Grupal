@@ -102,3 +102,38 @@ AS $$
 $$;
 
 GRANT EXECUTE ON FUNCTION public.sensor_stats() TO anon;
+
+-- 5. Eventos de cambio brusco del acelerómetro (detección por umbral en la app).
+CREATE TABLE IF NOT EXISTS event (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sensor_type TEXT NOT NULL
+                CHECK (sensor_type IN ('accelerometer')),
+    x           DOUBLE PRECISION,
+    y           DOUBLE PRECISION,
+    z           DOUBLE PRECISION,
+    recorded_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_event_recorded_at ON event (recorded_at DESC);
+
+ALTER TABLE event ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT ON public.event TO anon;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE tablename = 'event' AND policyname = 'anon puede leer'
+    ) THEN
+        CREATE POLICY "anon puede leer"
+            ON event FOR SELECT TO anon USING (true);
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE tablename = 'event' AND policyname = 'anon puede insertar'
+    ) THEN
+        CREATE POLICY "anon puede insertar"
+            ON event FOR INSERT TO anon WITH CHECK (true);
+    END IF;
+END $$;
